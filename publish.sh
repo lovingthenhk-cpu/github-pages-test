@@ -1,16 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
-SECRET=/run/secrets/github-token
 OWNER=lovingthenhk-cpu
 REPO=github-pages-test
 
-if [[ ! -r "$SECRET" ]]; then
-  echo "missing: $SECRET" >&2
+if [[ -n "${GITHUB_TOKEN:-}" ]]; then
+  GH_TOKEN="$GITHUB_TOKEN"
+elif [[ -n "${GH_TOKEN:-}" ]]; then
+  GH_TOKEN="$GH_TOKEN"
+elif [[ -r /run/secrets/github-token ]]; then
+  GH_TOKEN="$(cat /run/secrets/github-token)"
+else
+  echo "missing GitHub token: set GITHUB_TOKEN or GH_TOKEN" >&2
   exit 2
 fi
-
 export GH_TOKEN
-GH_TOKEN="$(cat "$SECRET")"
 
 api() {
   curl -fsSL     -H "Authorization: Bearer $GH_TOKEN"     -H "Accept: application/vnd.github+json"     -H "X-GitHub-Api-Version: 2022-11-28"     "$@"
