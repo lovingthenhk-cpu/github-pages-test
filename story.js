@@ -36,6 +36,7 @@ window.VN_DATA = {
       {t:'「五分だけなら」',next:'p1',mio:-1}
     ]},
     p1:{ch:'Day 1 — 放送研究会',bg:'club',chars:[['mio','left','neutral'],['akari','right','neutral']],lines:[
+      {s:'',t:'部室に入ると、大学祭のラジオドラマで使う劇中衣装の制服姿のまま、もう一人の先輩が機材を整理していた。'},
       {s:'???',t:'澪、それ誰？　まさか本当に通りすがりを捕まえてきたの？'},
       {s:'澪',t:'捕まえてない。交渉した。たぶん。',chars:[['mio','left','pout'],['akari','right','neutral']]},
       {s:'???',t:'それを世間では捕獲って言うんだよ。',chars:[['mio','left','pout'],['akari','right','smile']]},
