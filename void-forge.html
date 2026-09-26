@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#07111f">
+<title>VOID FORGE — Arena Roguelite</title>
+<style>
+:root{color-scheme:dark;--bg:#050912;--panel:#0b1424e8;--line:#ffffff1c;--text:#eef6ff;--muted:#8ea2ba;--cyan:#5ee7ff;--violet:#a78bfa;--red:#fb7185;--gold:#fbbf24;--green:#6ee7b7}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:radial-gradient(circle at 50% 20%,#102044,#07111f 40%,#03060c);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--text);overscroll-behavior:none}
+body{min-height:100svh;display:grid;place-items:center;padding:max(10px,env(safe-area-inset-top)) 10px max(10px,env(safe-area-inset-bottom));touch-action:none}
+.shell{width:min(980px,100%);display:grid;gap:8px}
+.top{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
+.brand{display:flex;align-items:baseline;gap:10px}.brand h1{font-size:clamp(18px,4vw,30px);margin:0;letter-spacing:.12em}.brand small{color:var(--muted)}
+.stats{display:flex;gap:12px;font-variant-numeric:tabular-nums}.stat{text-align:right}.stat b{display:block;font-size:18px}.stat span{font-size:9px;color:var(--muted);letter-spacing:.12em}
+.arena{position:relative;aspect-ratio:16/10;max-height:78svh;min-height:300px;border:1px solid var(--line);border-radius:22px;overflow:hidden;background:#050b14;box-shadow:0 25px 80px #0009;isolation:isolate}
+canvas{display:block;width:100%;height:100%}
+.overlay{position:absolute;inset:0;display:grid;place-items:center;padding:18px;pointer-events:none}
+.panel{pointer-events:auto;width:min(620px,100%);border:1px solid var(--line);border-radius:20px;background:#08111edc;backdrop-filter:blur(14px);padding:20px;box-shadow:0 20px 50px #000a}
+.panel[hidden]{display:none}.eyebrow{font-size:10px;font-weight:900;letter-spacing:.18em;color:var(--cyan)}.panel h2{margin:5px 0 8px;font-size:clamp(24px,6vw,42px)}.panel p{margin:6px 0 12px;color:#c4d2e3;line-height:1.5;font-size:14px}
+button{font:inherit;color:white;border:0;border-radius:12px;min-height:44px;padding:0 16px;font-weight:800;cursor:pointer;background:linear-gradient(135deg,#6d28d9,#0891b2)}
+button:disabled{opacity:.42;cursor:not-allowed}.primary{width:100%;min-height:50px;margin-top:8px}.tiny{min-height:34px;padding:0 10px;font-size:12px}
+.meta{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0}.metaCard{border:1px solid var(--line);background:#ffffff08;border-radius:14px;padding:12px}.metaCard b{display:block;margin-bottom:3px}.metaCard small{display:block;color:var(--muted);min-height:34px}.metaCard button{width:100%;margin-top:8px;background:#ffffff12;border:1px solid var(--line)}
+.upgrades{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.upgrade{min-height:150px;text-align:left;padding:14px;background:#0c1728;border:1px solid #ffffff20}.upgrade strong{display:block;font-size:17px;color:#fff}.upgrade em{display:block;margin:5px 0 8px;color:var(--cyan);font-style:normal;font-size:11px}.upgrade span{display:block;color:#b7c5d6;font-size:13px;line-height:1.45}
+.bars{position:absolute;left:12px;right:12px;top:10px;display:grid;gap:5px;pointer-events:none}.bar{height:7px;border-radius:99px;background:#ffffff13;overflow:hidden;border:1px solid #ffffff10}.bar i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#34d399,#22d3ee)}.bar.xp i{background:linear-gradient(90deg,#8b5cf6,#60a5fa);width:0}
+.wave{position:absolute;top:30px;left:50%;transform:translateX(-50%);font-weight:900;letter-spacing:.12em;font-size:11px;color:#c7d2fe;text-shadow:0 2px 8px #000}
+.toast{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);padding:7px 12px;border-radius:999px;background:#07111fd9;border:1px solid var(--line);font-size:12px;color:#dbeafe;opacity:0;transition:opacity .2s;pointer-events:none}
+.touch{position:absolute;inset:0;pointer-events:none}.stick{position:absolute;width:116px;height:116px;border-radius:50%;border:1px solid #ffffff21;background:#ffffff08;left:18px;bottom:18px;display:none}.nub{position:absolute;width:48px;height:48px;border-radius:50%;background:#ffffff22;border:1px solid #ffffff30;left:34px;top:34px}.dash{position:absolute;right:20px;bottom:24px;width:74px;height:74px;border-radius:50%;display:none;place-items:center;border:1px solid #ffffff24;background:#7c3aed33;font-weight:900;font-size:12px}
+.help{display:flex;justify-content:space-between;gap:12px;padding:0 4px;color:var(--muted);font-size:11px}.kbd{border:1px solid #ffffff22;border-bottom-width:2px;border-radius:5px;padding:1px 5px;color:#dbeafe;background:#ffffff09}
+@media(max-width:700px){.arena{aspect-ratio:10/13;max-height:78svh}.brand small{display:none}.upgrades{grid-template-columns:1fr}.upgrade{min-height:105px}.meta{grid-template-columns:1fr}.stick,.dash{display:grid}.help{justify-content:center}.help span:last-child{display:none}.panel{max-height:90%;overflow:auto}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="top">
+    <div class="brand"><h1>VOID FORGE</h1><small>arena roguelite</small></div>
+    <div class="stats">
+      <div class="stat"><b id="waveN">1</b><span>WAVE</span></div>
+      <div class="stat"><b id="levelN">1</b><span>LEVEL</span></div>
+      <div class="stat"><b id="scoreN">0</b><span>SCORE</span></div>
+      <div class="stat"><b id="coresN">0</b><span>CORES</span></div>
+    </div>
+  </div>
+  <div class="arena" id="arena" tabindex="0">
+    <canvas id="game"></canvas>
+    <div class="bars"><div class="bar"><i id="hpBar"></i></div><div class="bar xp"><i id="xpBar"></i></div></div>
+    <div class="wave" id="waveText">WAVE 1</div>
+    <div class="toast" id="toast"></div>
+    <div class="touch">
+      <div class="stick" id="stick"><div class="nub" id="nub"></div></div>
+      <div class="dash" id="dash">DASH</div>
+    </div>
+    <div class="overlay">
+      <section class="panel" id="menu">
+        <div class="eyebrow">PERSISTENT PROGRESSION</div>
+        <h2>生き残って、機体を育てる。</h2>
+        <p>移動だけ操作。武器は最寄りの敵へ自動射撃します。敵を倒して経験値を集め、レベルアップごとに3択強化。5ウェーブごとにボスが来ます。</p>
+        <div class="meta">
+          <div class="metaCard"><b>HULL Mk.<span id="hullLv">0</span></b><small>開始HPを恒久的に +10</small><button class="tiny metaBuy" data-k="hull">強化 <span id="hullCost"></span></button></div>
+          <div class="metaCard"><b>REACTOR Mk.<span id="reactorLv">0</span></b><small>基礎攻撃力を恒久的に +5%</small><button class="tiny metaBuy" data-k="reactor">強化 <span id="reactorCost"></span></button></div>
+          <div class="metaCard"><b>THRUSTER Mk.<span id="thrusterLv">0</span></b><small>移動速度を恒久的に +3%</small><button class="tiny metaBuy" data-k="thruster">強化 <span id="thrusterCost"></span></button></div>
+        </div>
+        <button class="primary" id="start">START RUN</button>
+        <p style="text-align:center;font-size:11px;color:#789">移動: WASD / 矢印キー　・　ダッシュ: Space<br>スマホは左下スティック + 右下DASH</p>
+      </section>
+      <section class="panel" id="levelup" hidden>
+        <div class="eyebrow">LEVEL UP</div><h2>強化を1つ選択</h2>
+        <div class="upgrades" id="upgradeList"></div>
+      </section>
+      <section class="panel" id="gameover" hidden>
+        <div class="eyebrow">RUN TERMINATED</div><h2 id="resultTitle">GAME OVER</h2>
+        <p id="result"></p>
+        <button class="primary" id="again">格納庫へ戻る</button>
+      </section>
+    </div>
+  </div>
+  <div class="help"><span><span class="kbd">WASD</span> 移動　<span class="kbd">SPACE</span> ダッシュ</span><span>5ウェーブごとにBOSS ・ コアは恒久強化に使用</span></div>
+</div>
+<script>
+(()=>{
+'use strict';
+const cv=document.getElementById('game'),ctx=cv.getContext('2d'),arena=document.getElementById('arena');
+const $=id=>document.getElementById(id);
+let W=800,H=500,DPR=1,run=false,paused=false,last=0,time=0,wave=1,score=0,level=1,xp=0,nextXp=24,spawn=0,waveClock=0;
+let player,enemies=[],bullets=[],gems=[],particles=[],stars=[],keys={},touchVec={x:0,y:0},dashCooldown=0,toastTimer=0;
+const saveKey='void-forge-save-v1';
+let save={cores:0,bestWave:0,bestScore:0,hull:0,reactor:0,thruster:0};
+try{Object.assign(save,JSON.parse(localStorage.getItem(saveKey)||'{}'))}catch(_){}
+function persist(){try{localStorage.setItem(saveKey,JSON.stringify(save))}catch(_){}}
+const UPG=[
+ {n:'Overcharge',tag:'DAMAGE',d:'攻撃力 +22%',apply:()=>player.damage*=1.22},
+ {n:'Rapid Cycle',tag:'FIRE RATE',d:'連射速度 +18%',apply:()=>player.fireRate*=1.18},
+ {n:'Twin Shot',tag:'MULTISHOT',d:'同時発射数 +1（最大5）',apply:()=>player.shots=Math.min(5,player.shots+1)},
+ {n:'Rail Core',tag:'PIERCE',d:'弾の貫通数 +1',apply:()=>player.pierce++},
+ {n:'Nanoforge',tag:'REGEN',d:'毎秒HP回復 +0.7',apply:()=>player.regen+=.7},
+ {n:'Vector Drive',tag:'SPEED',d:'移動速度 +12%',apply:()=>player.speed*=1.12},
+ {n:'Expanded Hull',tag:'MAX HP',d:'最大HP +25、即時25回復',apply:()=>{player.maxHp+=25;player.hp=Math.min(player.maxHp,player.hp+25)}},
+ {n:'Magnet Array',tag:'PICKUP',d:'経験値吸引距離 +35%',apply:()=>player.magnet*=1.35},
+ {n:'Critical Logic',tag:'CRIT',d:'クリティカル率 +8%',apply:()=>player.crit=Math.min(.55,player.crit+.08)},
+ {n:'Phase Dash',tag:'DASH',d:'ダッシュ再使用 -18%',apply:()=>player.dashCd=Math.max(.7,player.dashCd*.82)},
+ {n:'Drone Node',tag:'DRONE',d:'周回ドローン +1（接触ダメージ）',apply:()=>player.drones=Math.min(6,player.drones+1)},
+ {n:'Heavy Rounds',tag:'SIZE',d:'弾サイズ +35%、攻撃力 +8%',apply:()=>{player.bulletR*=1.35;player.damage*=1.08}}
+];
+function metaCost(k){return 4+save[k]*3+Math.floor(save[k]*save[k]*.6)}
+function refreshMeta(){
+ $('coresN').textContent=save.cores;$('hullLv').textContent=save.hull;$('reactorLv').textContent=save.reactor;$('thrusterLv').textContent=save.thruster;
+ for(const k of ['hull','reactor','thruster']){$(k+'Cost').textContent='('+metaCost(k)+' cores)';const b=document.querySelector('[data-k="'+k+'"]');b.disabled=save.cores<metaCost(k)}
+}
+function resize(){const r=cv.getBoundingClientRect();DPR=Math.min(devicePixelRatio||1,2);W=r.width;H=r.height;cv.width=Math.round(W*DPR);cv.height=Math.round(H*DPR);ctx.setTransform(DPR,0,0,DPR,0,0);stars=Array.from({length:Math.floor(W*H/7000)},()=>({x:Math.random()*W,y:Math.random()*H,s:Math.random()*1.4+.3,a:Math.random()*.55+.2}))}
+function reset(){
+ wave=1;score=0;level=1;xp=0;nextXp=24;time=0;spawn=.5;waveClock=0;enemies=[];bullets=[];gems=[];particles=[];dashCooldown=0;
+ player={x:W/2,y:H/2,r:12,hp:100+save.hull*10,maxHp:100+save.hull*10,speed:190*(1+save.thruster*.03),damage:18*(1+save.reactor*.05),fireRate:2.2,fireT:0,shots:1,pierce:0,regen:0,magnet:95,crit:.05,dashCd:2.4,drones:0,bulletR:3.4,inv:0};
+ run=true;paused=false;$('menu').hidden=true;$('gameover').hidden=true;$('levelup').hidden=true;arena.focus({preventScroll:true});last=performance.now();requestAnimationFrame(loop)
+}
+function enemyType(){
+ const r=Math.random(), boss=wave%5===0 && !enemies.some(e=>e.boss) && waveClock<2;
+ if(boss)return {boss:true,r:34,hp:500+wave*140,speed:45+wave*1.5,dmg:22,color:'#f59e0b',xp:45};
+ if(r<Math.min(.18,.04+wave*.008))return {r:18,hp:70+wave*11,speed:58+wave*2,dmg:16,color:'#c084fc',xp:8};
+ if(r<.42)return {r:9,hp:18+wave*4,speed:105+wave*3,dmg:8,color:'#fb7185',xp:3};
+ return {r:13,hp:34+wave*6,speed:78+wave*2.5,dmg:11,color:'#60a5fa',xp:5}
+}
+function spawnEnemy(){
+ const e=enemyType(),side=Math.floor(Math.random()*4),pad=28;
+ if(side===0){e.x=Math.random()*W;e.y=-pad}else if(side===1){e.x=W+pad;e.y=Math.random()*H}else if(side===2){e.x=Math.random()*W;e.y=H+pad}else{e.x=-pad;e.y=Math.random()*H}
+ e.maxHp=e.hp;e.hit=0;enemies.push(e)
+}
+function nearest(){let best=null,bd=1e9;for(const e of enemies){const dx=e.x-player.x,dy=e.y-player.y,d=dx*dx+dy*dy;if(d<bd){bd=d;best=e}}return best}
+function fire(){
+ const t=nearest();if(!t)return;const base=Math.atan2(t.y-player.y,t.x-player.x),spread=.13;
+ for(let i=0;i<player.shots;i++){const a=base+(i-(player.shots-1)/2)*spread;bullets.push({x:player.x,y:player.y,vx:Math.cos(a)*460,vy:Math.sin(a)*460,r:player.bulletR,dmg:player.damage,pierce:player.pierce,life:1.5})}
+}
+function dash(){
+ if(!run||paused||dashCooldown>0)return;let dx=touchVec.x,dy=touchVec.y;if(!dx&&!dy){dx=(keys.ArrowRight||keys.d?1:0)-(keys.ArrowLeft||keys.a?1:0);dy=(keys.ArrowDown||keys.s?1:0)-(keys.ArrowUp||keys.w?1:0)}if(!dx&&!dy)return;
+ const m=Math.hypot(dx,dy);player.x+=dx/m*105;player.y+=dy/m*105;player.x=Math.max(16,Math.min(W-16,player.x));player.y=Math.max(16,Math.min(H-16,player.y));player.inv=.28;dashCooldown=player.dashCd;burst(player.x,player.y,'#a78bfa',18)
+}
+function burst(x,y,c,n=8){for(let i=0;i<n;i++){const a=Math.random()*6.28,s=30+Math.random()*110;particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:.35+Math.random()*.4,c})}}
+function addXp(v){xp+=v;while(xp>=nextXp){xp-=nextXp;level++;nextXp=Math.floor(nextXp*1.22+5);chooseUpgrade();break}}
+function chooseUpgrade(){
+ paused=true;$('levelup').hidden=false;const pool=[...UPG].sort(()=>Math.random()-.5).slice(0,3),box=$('upgradeList');box.innerHTML='';
+ for(const u of pool){const b=document.createElement('button');b.className='upgrade';b.innerHTML='<strong>'+u.n+'</strong><em>'+u.tag+'</em><span>'+u.d+'</span>';b.onclick=()=>{u.apply();$('levelup').hidden=true;paused=false;toast(u.n+' acquired');last=performance.now()};box.appendChild(b)}
+}
+function toast(s){const el=$('toast');el.textContent=s;el.style.opacity='1';toastTimer=1.2}
+function kill(e){score+=e.boss?900:Math.round(e.maxHp*1.8);gems.push({x:e.x,y:e.y,v:e.xp,r:e.boss?8:5});burst(e.x,e.y,e.color,e.boss?30:7)}
+function end(){
+ run=false;paused=true;const earned=Math.max(1,Math.floor(score/650)+Math.floor(wave/2));save.cores+=earned;save.bestWave=Math.max(save.bestWave,wave);save.bestScore=Math.max(save.bestScore,Math.floor(score));persist();refreshMeta();
+ $('result').innerHTML='到達 Wave <b>'+wave+'</b> / Score <b>'+Math.floor(score).toLocaleString()+'</b><br>回収したコア: <b>+'+earned+'</b><br>BEST Wave '+save.bestWave+' / '+save.bestScore.toLocaleString()+' pts';$('gameover').hidden=false
+}
+function update(dt){
+ time+=dt;waveClock+=dt;if(waveClock>=28){wave++;waveClock=0;$('waveN').textContent=wave;$('waveText').textContent=wave%5===0?'BOSS WAVE '+wave:'WAVE '+wave;toast(wave%5===0?'WARNING: BOSS INBOUND':'WAVE '+wave)}
+ dashCooldown=Math.max(0,dashCooldown-dt);player.inv=Math.max(0,player.inv-dt);player.hp=Math.min(player.maxHp,player.hp+player.regen*dt);
+ let dx=(keys.ArrowRight||keys.d?1:0)-(keys.ArrowLeft||keys.a?1:0)+touchVec.x,dy=(keys.ArrowDown||keys.s?1:0)-(keys.ArrowUp||keys.w?1:0)+touchVec.y,m=Math.hypot(dx,dy);if(m){dx/=m;dy/=m;player.x+=dx*player.speed*dt;player.y+=dy*player.speed*dt}
+ player.x=Math.max(player.r,Math.min(W-player.r,player.x));player.y=Math.max(player.r+18,Math.min(H-player.r,player.y));
+ player.fireT-=dt;if(player.fireT<=0){fire();player.fireT=1/player.fireRate}
+ spawn-=dt;if(spawn<=0){spawnEnemy();spawn=Math.max(.12,.72-wave*.024)*(0.7+Math.random()*.55)}
+ for(const b of bullets){b.x+=b.vx*dt;b.y+=b.vy*dt;b.life-=dt}
+ for(const e of enemies){const ax=player.x-e.x,ay=player.y-e.y,am=Math.hypot(ax,ay)||1;e.x+=ax/am*e.speed*dt;e.y+=ay/am*e.speed*dt;e.hit=Math.max(0,e.hit-dt)}
+ for(const b of bullets){if(b.life<=0)continue;for(const e of enemies){if(e.hp<=0)continue;const rr=b.r+e.r,dx=b.x-e.x,dy=b.y-e.y;if(dx*dx+dy*dy<rr*rr){let dmg=b.dmg;if(Math.random()<player.crit)dmg*=2;e.hp-=dmg;e.hit=.08;b.pierce--;if(b.pierce<0)b.life=0;if(e.hp<=0)kill(e);break}}}
+ enemies=enemies.filter(e=>e.hp>0);bullets=bullets.filter(b=>b.life>0&&b.x>-30&&b.x<W+30&&b.y>-30&&b.y<H+30);
+ for(const e of enemies){const rr=player.r+e.r,dx=e.x-player.x,dy=e.y-player.y;if(dx*dx+dy*dy<rr*rr&&player.inv<=0){player.hp-=e.dmg;player.inv=.45;const mm=Math.hypot(dx,dy)||1;e.x+=dx/mm*20;e.y+=dy/mm*20;burst(player.x,player.y,'#fb7185',10);if(player.hp<=0){end();return}}}
+ for(let i=0;i<player.drones;i++){const a=time*2.1+i/player.drones*6.28,x=player.x+Math.cos(a)*42,y=player.y+Math.sin(a)*42;for(const e of enemies){if(e.hit>0)continue;const dx=e.x-x,dy=e.y-y;if(dx*dx+dy*dy<(e.r+7)*(e.r+7)){e.hp-=player.damage*.55;e.hit=.12;if(e.hp<=0)kill(e)}}}
+ enemies=enemies.filter(e=>e.hp>0);
+ for(let i=gems.length-1;i>=0;i--){const g=gems[i],dx=player.x-g.x,dy=player.y-g.y,d=Math.hypot(dx,dy);if(d<player.magnet){const sp=220+(player.magnet-d)*2;g.x+=dx/(d||1)*sp*dt;g.y+=dy/(d||1)*sp*dt}if(d<player.r+9){addXp(g.v);gems.splice(i,1)}}
+ for(const p of particles){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=.96;p.vy*=.96;p.life-=dt}particles=particles.filter(p=>p.life>0);
+ score+=dt*(8+wave*1.2);$('scoreN').textContent=Math.floor(score);$('levelN').textContent=level;$('hpBar').style.width=Math.max(0,player.hp/player.maxHp*100)+'%';$('xpBar').style.width=xp/nextXp*100+'%';
+ if(toastTimer>0){toastTimer-=dt;if(toastTimer<=0)$('toast').style.opacity='0'}
+}
+function draw(){
+ ctx.clearRect(0,0,W,H);const g=ctx.createRadialGradient(W*.5,H*.5,20,W*.5,H*.5,Math.max(W,H)*.7);g.addColorStop(0,'#0c1b31');g.addColorStop(1,'#03060b');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+ for(const s of stars){ctx.globalAlpha=s.a*(.7+.3*Math.sin(time*.8+s.x));ctx.fillStyle='#dbeafe';ctx.fillRect(s.x,s.y,s.s,s.s)}ctx.globalAlpha=1;
+ for(const g of gems){ctx.save();ctx.translate(g.x,g.y);ctx.rotate(time*2);ctx.fillStyle=g.v>20?'#fbbf24':'#5ee7ff';ctx.shadowColor=ctx.fillStyle;ctx.shadowBlur=10;ctx.fillRect(-g.r,-g.r,g.r*2,g.r*2);ctx.restore()}
+ for(const b of bullets){ctx.fillStyle='#e0f2fe';ctx.shadowColor='#5ee7ff';ctx.shadowBlur=8;ctx.beginPath();ctx.arc(b.x,b.y,b.r,0,7);ctx.fill();ctx.shadowBlur=0}
+ for(const e of enemies){ctx.save();ctx.translate(e.x,e.y);ctx.fillStyle=e.hit?'#fff':e.color;ctx.shadowColor=e.color;ctx.shadowBlur=e.boss?18:8;ctx.beginPath();ctx.arc(0,0,e.r,0,7);ctx.fill();ctx.shadowBlur=0;if(e.boss){ctx.strokeStyle='#ffffff80';ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,0,e.r+7+Math.sin(time*4)*3,0,7);ctx.stroke()}if(e.hp<e.maxHp){ctx.fillStyle='#0008';ctx.fillRect(-e.r,e.r+5,e.r*2,3);ctx.fillStyle='#6ee7b7';ctx.fillRect(-e.r,e.r+5,e.r*2*Math.max(0,e.hp/e.maxHp),3)}ctx.restore()}
+ for(const p of particles){ctx.globalAlpha=Math.max(0,p.life*2);ctx.fillStyle=p.c;ctx.fillRect(p.x,p.y,2,2)}ctx.globalAlpha=1;
+ if(player){for(let i=0;i<player.drones;i++){const a=time*2.1+i/player.drones*6.28,x=player.x+Math.cos(a)*42,y=player.y+Math.sin(a)*42;ctx.fillStyle='#a78bfa';ctx.beginPath();ctx.arc(x,y,6,0,7);ctx.fill()}
+ ctx.save();ctx.translate(player.x,player.y);ctx.globalAlpha=player.inv>0&&Math.floor(time*20)%2?0.28:1;ctx.fillStyle='#f8fafc';ctx.shadowColor='#5ee7ff';ctx.shadowBlur=16;ctx.beginPath();ctx.moveTo(15,0);ctx.lineTo(-10,-9);ctx.lineTo(-5,0);ctx.lineTo(-10,9);ctx.closePath();ctx.fill();ctx.shadowBlur=0;ctx.restore()}
+}
+function loop(now){if(!run){draw();return}const dt=Math.min(.033,(now-last)/1000||0);last=now;if(!paused)update(dt);draw();requestAnimationFrame(loop)}
+document.addEventListener('keydown',e=>{const k=e.key.length===1?e.key.toLowerCase():e.key;keys[k]=true;if(e.code==='Space'){e.preventDefault();dash()}});
+document.addEventListener('keyup',e=>{const k=e.key.length===1?e.key.toLowerCase():e.key;keys[k]=false});
+$('start').onclick=reset;$('again').onclick=()=>{$('gameover').hidden=true;$('menu').hidden=false;refreshMeta()};
+document.querySelectorAll('.metaBuy').forEach(b=>b.onclick=()=>{const k=b.dataset.k,c=metaCost(k);if(save.cores>=c){save.cores-=c;save[k]++;persist();refreshMeta()}});
+const stick=$('stick'),nub=$('nub');let stickId=null;
+function stickMove(e){const r=stick.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,dx=e.clientX-cx,dy=e.clientY-cy,m=Math.hypot(dx,dy),lim=42,q=Math.min(1,m/lim);touchVec={x:m?dx/m*q:0,y:m?dy/m*q:0};nub.style.transform='translate('+(touchVec.x*lim)+'px,'+(touchVec.y*lim)+'px)'}
+stick.addEventListener('pointerdown',e=>{stickId=e.pointerId;stick.setPointerCapture(e.pointerId);stickMove(e)});
+stick.addEventListener('pointermove',e=>{if(e.pointerId===stickId)stickMove(e)});
+function stickEnd(e){if(e.pointerId!==stickId)return;stickId=null;touchVec={x:0,y:0};nub.style.transform='translate(0,0)'}
+stick.addEventListener('pointerup',stickEnd);stick.addEventListener('pointercancel',stickEnd);$('dash').addEventListener('pointerdown',e=>{e.preventDefault();dash()});
+window.addEventListener('resize',resize,{passive:true});resize();refreshMeta();draw();
+})();
+</script>
+</body>
+</html>
